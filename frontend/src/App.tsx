@@ -1,6 +1,6 @@
 import Header from './components/Header';
 import SalesCard from './components/SalesCard';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
