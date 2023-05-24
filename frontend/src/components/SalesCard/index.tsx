@@ -3,11 +3,15 @@ import NotificationButton from '../NotificationButton';
 import './styles.css';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import { BASE_URL } from '../../utils/request';
 import { Sale } from '../../models/sale';
+import Pagination from '../Pagination';
+import { SpringPage } from '../../models/vendor/spring';
 
 function SalesCard() {
+
+    const [page, setPage] = useState<SpringPage<Sale>>();
 
     const min = new Date(new Date().setDate(new Date().getDate() - 365));
     const max = new Date();
@@ -15,19 +19,29 @@ function SalesCard() {
     const [minDate, setMinDate] = useState(min);
     const [maxDate, setMaxDate] = useState(max);
 
-    const [sales, setSales] = useState<Sale[]>([]);
+    const getSales = (pageNumber: number) => {
+        const dmin = minDate.toISOString().slice(0, 10);
+        const dmax = maxDate.toISOString().slice(0, 10);
+
+        const params: AxiosRequestConfig = {
+            method: 'GET',
+            baseURL: BASE_URL,
+            url: '/sales',
+            params: {
+                page: pageNumber,
+                size: 12,
+                minDate: dmin,
+                maxDate: dmax
+            }
+        };
+        axios(params).then(response => {
+            setPage(response.data);
+        })
+    }
 
     useEffect(() => {
-
-        const dmin = minDate.toISOString().slice(0,10);
-        const dmax = maxDate.toISOString().slice(0,10);
-
-        axios.get(`${BASE_URL}/sales?minDate=${dmin}&maxDate=${dmax}`)
-            .then(response => {
-                setSales(response.data.content);
-            })
+       getSales(0);
     }, [minDate, maxDate]);
-
 
     return (
         <>
@@ -67,7 +81,7 @@ function SalesCard() {
                         </thead>
                         <tbody>
                             {
-                                sales.map(sale => {
+                                page?.content.map(sale => {
                                     return (
                                         <tr key={sale.id}>
                                             <td className="show992">{sale.id}</td>
@@ -89,7 +103,9 @@ function SalesCard() {
 
                     </table>
                 </div>
-
+                <div>
+                    <Pagination pageCount={page ? page.totalPages : 0} range={3} onChange={getSales} />
+                </div>
             </div>
         </>
     )
